@@ -23,44 +23,6 @@
             margin: 0 auto;
         }
 
-        .header {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 28px;
-            color: #111827;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .header {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 28px;
-            color: #111827;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
         .tabs {
             background: white;
             border-radius: 8px;
@@ -150,8 +112,8 @@
         .btn-danger {
             background: #dc2626;
             color: white;
-            padding: 6px 10px;
-            font-size: 12px;
+            padding: 10px 16px;
+            font-size: 14px;
         }
 
         .btn-danger:hover {
@@ -397,14 +359,6 @@
             width: 100%;
         }
 
-        .filter-box {
-            min-width: 150px;
-        }
-
-        .filter-box select {
-            width: 100%;
-        }
-
         .clear-filters-btn {
             padding: 8px 16px;
             background: #6b7280;
@@ -431,6 +385,37 @@
             margin-bottom: 16px;
         }
 
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .sync-status.synced {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .sync-status.syncing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .sync-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -451,20 +436,8 @@
             th, td {
                 padding: 8px;
             }
-
-            .header > div {
-                flex-direction: column;
-                gap: 16px;
-                align-items: flex-start !important;
-            }
-
-            .header .button-group {
-                width: 100%;
-                flex-wrap: wrap;
-            }
         }
 
-        /* Hidden file input */
         input[type="file"] {
             display: none;
         }
@@ -478,6 +451,9 @@
             <button class="tab" onclick="switchTab('summary')">Summary</button>
             <button class="tab" onclick="switchTab('clientFilter')">Client Filter</button>
             <button class="tab" onclick="switchTab('monthFilter')">Month Filter</button>
+            <div style="margin-left: auto; padding: 12px;">
+                <span id="sync-status" class="sync-status synced">☁️ Synced</span>
+            </div>
         </div>
 
         <!-- Payments Tab -->
@@ -491,7 +467,6 @@
                     </div>
                 </div>
                 
-                <!-- Search and Filters -->
                 <div class="search-filter-section">
                     <div class="search-box">
                         <input 
@@ -506,27 +481,28 @@
                     </button>
                 </div>
 
-                <div style="overflow-x: auto;">
-                    <table id="payments-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Month</th>
-                                <th>Client Name</th>
-                                <th>Policy #</th>
-                                <th>Amount</th>
-                                <th>Type</th>
-                                <th>Reference</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="payments-tbody"></tbody>
-                    </table>
+                <div id="payments-loading" class="loading">Loading payments...</div>
+                <div id="payments-content" style="display: none;">
+                    <div style="overflow-x: auto;">
+                        <table id="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Month</th>
+                                    <th>Client Name</th>
+                                    <th>Policy #</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Reference</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="payments-pagination" class="pagination"></div>
                 </div>
-                
-                <!-- Pagination -->
-                <div id="payments-pagination" class="pagination"></div>
             </div>
         </div>
 
@@ -541,7 +517,6 @@
                     </div>
                 </div>
                 
-                <!-- Search -->
                 <div class="search-filter-section">
                     <div class="search-box">
                         <input 
@@ -556,25 +531,26 @@
                     </button>
                 </div>
 
-                <div style="overflow-x: auto;">
-                    <table id="clients-table">
-                        <thead>
-                            <tr>
-                                <th>Client Name</th>
-                                <th>Policy #</th>
-                                <th>Exp Date</th>
-                                <th>Phone</th>
-                                <th>Email</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clients-tbody"></tbody>
-                    </table>
+                <div id="clients-loading" class="loading">Loading clients...</div>
+                <div id="clients-content" style="display: none;">
+                    <div style="overflow-x: auto;">
+                        <table id="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>Client Name</th>
+                                    <th>Policy #</th>
+                                    <th>Exp Date</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="clients-pagination" class="pagination"></div>
                 </div>
-                
-                <!-- Pagination -->
-                <div id="clients-pagination" class="pagination"></div>
             </div>
         </div>
 
@@ -650,30 +626,22 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Load data from localStorage or use defaults
-        const defaultClients = [
-            { id: 1, name: 'Ansar Ahmed', policy: 'FPT045541', expDate: '2025-12-31', phone: '555-0101', email: 'ansar@email.com', notes: '' },
-            { id: 2, name: 'Jewel Moniruzzaman', policy: 'C200626', expDate: '2025-11-15', phone: '555-0102', email: 'jewel@email.com', notes: '' },
-            { id: 3, name: 'Ines B Yameogo', policy: 'FPT011601', expDate: '2025-10-20', phone: '555-0103', email: 'ines@email.com', notes: '' },
-            { id: 4, name: 'Mamun Rashid', policy: 'ABC123', expDate: '2025-09-30', phone: '555-0104', email: 'mamun@email.com', notes: '' }
-        ];
+        // Supabase configuration
+        const SUPABASE_URL = 'https://lreqywttsxetueyejgla.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXF5d3R0c3hldHVleWVqZ2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjczODksImV4cCI6MjA3NjMwMzM4OX0.4AZFB2gQ39rsh7JBojZQQMtL3df7_uY_4m1FrVfQQgQ';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const defaultPayments = [
-            { id: 1, dateReceived: '2025-03-14', clientName: 'Jewel Moniruzzaman', amount: 372.08, paymentType: 'Zelle', reference: 'zelle SHAHIDUL ISLAM', status: 'Paid' },
-            { id: 2, dateReceived: '2025-03-15', clientName: 'Ines B Yameogo', amount: 416.72, paymentType: 'Zelle', reference: '', status: 'Paid' },
-            { id: 3, dateReceived: '2025-03-14', clientName: 'Mamun Rashid', amount: 200, paymentType: 'Zelle', reference: 'Test payment', status: 'Paid' },
-            { id: 4, dateReceived: '2025-03-17', clientName: 'Mamun Rashid', amount: 400, paymentType: 'Zelle', reference: 'Second payment', status: 'Paid' }
-        ];
-
-        // Load from localStorage or use defaults
-        let clients = JSON.parse(localStorage.getItem('insurance_clients')) || defaultClients;
-        let payments = JSON.parse(localStorage.getItem('insurance_payments')) || defaultPayments;
+        // Data storage
+        let clients = [];
+        let payments = [];
 
         const paymentTypes = ['Zelle', 'ACH', 'Cash', 'Check'];
         const statuses = ['Paid', 'Pending'];
 
-        // Pagination and filter state
+        // Pagination state
         let paymentsPage = 1;
         let paymentsPerPage = 50;
         let paymentsSearchTerm = '';
@@ -682,10 +650,77 @@
         let clientsPerPage = 50;
         let clientsSearchTerm = '';
 
-        // Save to localStorage
-        function saveData() {
-            localStorage.setItem('insurance_clients', JSON.stringify(clients));
-            localStorage.setItem('insurance_payments', JSON.stringify(payments));
+        // Sync status
+        function setSyncStatus(status) {
+            const statusEl = document.getElementById('sync-status');
+            statusEl.className = 'sync-status ' + status;
+            if (status === 'synced') {
+                statusEl.innerHTML = '☁️ Synced';
+            } else if (status === 'syncing') {
+                statusEl.innerHTML = '🔄 Syncing...';
+            } else if (status === 'error') {
+                statusEl.innerHTML = '⚠️ Sync Error';
+            }
+        }
+
+        // Load data from Supabase
+        async function loadClients() {
+            try {
+                const { data, error } = await supabase
+                    .from('clients')
+                    .select('*')
+                    .order('id');
+                
+                if (error) throw error;
+                
+                clients = data.map(c => ({
+                    id: c.id,
+                    name: c.name || '',
+                    policy: c.policy || '',
+                    expDate: c.exp_date || '',
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    notes: c.notes || ''
+                }));
+                
+                document.getElementById('clients-loading').style.display = 'none';
+                document.getElementById('clients-content').style.display = 'block';
+                renderClients();
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                alert('Error loading clients from database');
+                setSyncStatus('error');
+            }
+        }
+
+        async function loadPayments() {
+            try {
+                const { data, error } = await supabase
+                    .from('payments')
+                    .select('*')
+                    .order('id');
+                
+                if (error) throw error;
+                
+                payments = data.map(p => ({
+                    id: p.id,
+                    dateReceived: p.date_received || '',
+                    clientName: p.client_name || '',
+                    amount: p.amount || 0,
+                    paymentType: p.payment_type || 'Zelle',
+                    reference: p.reference || '',
+                    status: p.status || 'Paid'
+                }));
+                
+                document.getElementById('payments-loading').style.display = 'none';
+                document.getElementById('payments-content').style.display = 'block';
+                renderPayments();
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                alert('Error loading payments from database');
+                setSyncStatus('error');
+            }
         }
 
         // Helper functions
@@ -810,7 +845,6 @@
                     </button>
             `;
 
-            // Show page numbers
             const maxPageButtons = 5;
             let startPage = Math.max(1, paymentsPage - Math.floor(maxPageButtons / 2));
             let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
@@ -846,7 +880,7 @@
         }
 
         function filterPayments() {
-            paymentsPage = 1; // Reset to first page when filtering
+            paymentsPage = 1;
             renderPayments();
         }
 
@@ -951,18 +985,16 @@
         }
 
         function renderSummary() {
-            // Calculate totals
             const totalReceived = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
             const numPayments = payments.filter(p => p.amount > 0).length;
             const avgPayment = numPayments > 0 ? totalReceived / numPayments : 0;
 
-            // KPI Cards
             const kpiGrid = document.getElementById('kpi-grid');
             kpiGrid.innerHTML = `
                 <div class="kpi-card blue">
                     <div>
                         <div class="kpi-label">Total Received</div>
-                        <div class="kpi-value">$${totalReceived.toFixed(2)}</div>
+                        <div class="kpi-value">${totalReceived.toFixed(2)}</div>
                     </div>
                     <div class="kpi-icon">💰</div>
                 </div>
@@ -976,13 +1008,12 @@
                 <div class="kpi-card purple">
                     <div>
                         <div class="kpi-label">Avg Payment</div>
-                        <div class="kpi-value">$${avgPayment.toFixed(2)}</div>
+                        <div class="kpi-value">${avgPayment.toFixed(2)}</div>
                     </div>
                     <div class="kpi-icon">👥</div>
                 </div>
             `;
 
-            // Payment type breakdown
             const paymentTypesDiv = document.getElementById('payment-types');
             let typesHTML = '';
             paymentTypes.forEach(type => {
@@ -992,7 +1023,7 @@
                     <div class="payment-type-card">
                         <span class="payment-type-name">${type}</span>
                         <div style="text-align: right;">
-                            <div class="payment-type-amount">$${total.toFixed(2)}</div>
+                            <div class="payment-type-amount">${total.toFixed(2)}</div>
                             <div class="payment-type-percent">${percent}%</div>
                         </div>
                     </div>
@@ -1000,7 +1031,6 @@
             });
             paymentTypesDiv.innerHTML = typesHTML;
 
-            // Monthly summary
             const monthlySummary = document.getElementById('monthly-summary');
             let monthsHTML = '';
             getUniqueMonths().forEach(month => {
@@ -1011,9 +1041,9 @@
                 monthsHTML += `
                     <tr>
                         <td style="font-weight: 500;">${month}</td>
-                        <td style="text-align: right;">$${total.toFixed(2)}</td>
+                        <td style="text-align: right;">${total.toFixed(2)}</td>
                         <td style="text-align: right;">${count}</td>
-                        <td style="text-align: right;">$${avg.toFixed(2)}</td>
+                        <td style="text-align: right;">${avg.toFixed(2)}</td>
                     </tr>
                 `;
             });
@@ -1056,7 +1086,7 @@
                     <div class="kpi-card blue">
                         <div>
                             <div class="kpi-label">Total Paid</div>
-                            <div class="kpi-value">$${total.toFixed(2)}</div>
+                            <div class="kpi-value">${total.toFixed(2)}</div>
                         </div>
                     </div>
                     <div class="kpi-card green">
@@ -1068,7 +1098,7 @@
                     <div class="kpi-card purple">
                         <div>
                             <div class="kpi-label">Avg per Month</div>
-                            <div class="kpi-value">$${avgPerMonth.toFixed(2)}</div>
+                            <div class="kpi-value">${avgPerMonth.toFixed(2)}</div>
                         </div>
                     </div>
                 </div>
@@ -1095,7 +1125,7 @@
                         <td>${formatDate(payment.dateReceived)}</td>
                         <td>${formatMonth(payment.dateReceived)}</td>
                         <td>${getClientPolicy(payment.clientName)}</td>
-                        <td style="font-weight: 600;">$${parseFloat(payment.amount).toFixed(2)}</td>
+                        <td style="font-weight: 600;">${parseFloat(payment.amount).toFixed(2)}</td>
                         <td>${payment.paymentType}</td>
                         <td>${payment.reference}</td>
                         <td><span class="status-badge ${statusClass}">${payment.status}</span></td>
@@ -1126,7 +1156,7 @@
                     <div class="kpi-card blue">
                         <div>
                             <div class="kpi-label">Total Paid</div>
-                            <div class="kpi-value">$${total.toFixed(2)}</div>
+                            <div class="kpi-value">${total.toFixed(2)}</div>
                         </div>
                     </div>
                     <div class="kpi-card green">
@@ -1138,7 +1168,7 @@
                     <div class="kpi-card purple">
                         <div>
                             <div class="kpi-label">Avg Payment</div>
-                            <div class="kpi-value">$${avg.toFixed(2)}</div>
+                            <div class="kpi-value">${avg.toFixed(2)}</div>
                         </div>
                     </div>
                 </div>
@@ -1178,60 +1208,140 @@
         }
 
         // CRUD operations
-        function addClient() {
-            const newId = Math.max(...clients.map(c => c.id), 0) + 1;
-            clients.push({ id: newId, name: '', policy: '', expDate: '', phone: '', email: '', notes: '' });
-            saveData();
-            renderClients();
+        async function addClient() {
+            try {
+                setSyncStatus('syncing');
+                const { data, error } = await supabase
+                    .from('clients')
+                    .insert([{ name: '', policy: '', exp_date: '', phone: '', email: '', notes: '' }])
+                    .select();
+                
+                if (error) throw error;
+                
+                await loadClients();
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('Error adding client:', error);
+                alert('Error adding client to database');
+                setSyncStatus('error');
+            }
         }
 
-        function deleteClient(id) {
+        async function deleteClient(id) {
             if (confirm('Are you sure you want to delete this client?')) {
-                clients = clients.filter(c => c.id !== id);
-                saveData();
-                renderClients();
+                try {
+                    setSyncStatus('syncing');
+                    const { error } = await supabase
+                        .from('clients')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    await loadClients();
+                    setSyncStatus('synced');
+                } catch (error) {
+                    console.error('Error deleting client:', error);
+                    alert('Error deleting client from database');
+                    setSyncStatus('error');
+                }
             }
         }
 
-        function updateClient(id, field, value) {
-            const client = clients.find(c => c.id === id);
-            if (client) {
-                client[field] = value;
-                saveData();
-                renderPayments(); // Update payments table in case policy changed
+        async function updateClient(id, field, value) {
+            try {
+                setSyncStatus('syncing');
+                const dbField = field === 'expDate' ? 'exp_date' : field;
+                const { error } = await supabase
+                    .from('clients')
+                    .update({ [dbField]: value })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                const client = clients.find(c => c.id === id);
+                if (client) {
+                    client[field] = value;
+                }
+                renderPayments();
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('Error updating client:', error);
+                setSyncStatus('error');
             }
         }
 
-        function addPayment() {
-            const newId = Math.max(...payments.map(p => p.id), 0) + 1;
-            const today = new Date().toISOString().split('T')[0];
-            payments.push({ 
-                id: newId, 
-                dateReceived: today, 
-                clientName: '', 
-                amount: '', 
-                paymentType: 'Zelle', 
-                reference: '', 
-                status: 'Paid' 
-            });
-            saveData();
-            renderPayments();
+        async function addPayment() {
+            try {
+                setSyncStatus('syncing');
+                const today = new Date().toISOString().split('T')[0];
+                const { data, error } = await supabase
+                    .from('payments')
+                    .insert([{ 
+                        date_received: today, 
+                        client_name: '', 
+                        amount: 0, 
+                        payment_type: 'Zelle', 
+                        reference: '', 
+                        status: 'Paid' 
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                await loadPayments();
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('Error adding payment:', error);
+                alert('Error adding payment to database');
+                setSyncStatus('error');
+            }
         }
 
-        function deletePayment(id) {
+        async function deletePayment(id) {
             if (confirm('Are you sure you want to delete this payment?')) {
-                payments = payments.filter(p => p.id !== id);
-                saveData();
-                renderPayments();
+                try {
+                    setSyncStatus('syncing');
+                    const { error } = await supabase
+                        .from('payments')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    await loadPayments();
+                    setSyncStatus('synced');
+                } catch (error) {
+                    console.error('Error deleting payment:', error);
+                    alert('Error deleting payment from database');
+                    setSyncStatus('error');
+                }
             }
         }
 
-        function updatePayment(id, field, value) {
-            const payment = payments.find(p => p.id === id);
-            if (payment) {
-                payment[field] = value;
-                saveData();
+        async function updatePayment(id, field, value) {
+            try {
+                setSyncStatus('syncing');
+                const dbField = field === 'dateReceived' ? 'date_received' : 
+                               field === 'clientName' ? 'client_name' :
+                               field === 'paymentType' ? 'payment_type' : field;
+                
+                const { error } = await supabase
+                    .from('payments')
+                    .update({ [dbField]: value })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                const payment = payments.find(p => p.id === id);
+                if (payment) {
+                    payment[field] = value;
+                }
                 renderPayments();
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('Error updating payment:', error);
+                setSyncStatus('error');
             }
         }
 
@@ -1266,32 +1376,61 @@
             alert('✅ Backup downloaded successfully!');
         }
 
-        function restoreData() {
+        async function restoreData() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
-            input.onchange = function(e) {
+            input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
 
                 const reader = new FileReader();
-                reader.onload = function(event) {
+                reader.onload = async function(event) {
                     try {
                         const backup = JSON.parse(event.target.result);
                         if (backup.clients && backup.payments) {
-                            if (confirm('⚠️ This will replace all current data. Are you sure?')) {
-                                clients = backup.clients;
-                                payments = backup.payments;
-                                saveData();
-                                renderClients();
-                                renderPayments();
+                            if (confirm('⚠️ This will replace all current data in the cloud database. Are you sure?')) {
+                                setSyncStatus('syncing');
+                                
+                                // Delete all existing data
+                                await supabase.from('clients').delete().neq('id', 0);
+                                await supabase.from('payments').delete().neq('id', 0);
+                                
+                                // Insert backup data
+                                for (const client of backup.clients) {
+                                    await supabase.from('clients').insert({
+                                        name: client.name,
+                                        policy: client.policy,
+                                        exp_date: client.expDate,
+                                        phone: client.phone,
+                                        email: client.email,
+                                        notes: client.notes
+                                    });
+                                }
+                                
+                                for (const payment of backup.payments) {
+                                    await supabase.from('payments').insert({
+                                        date_received: payment.dateReceived,
+                                        client_name: payment.clientName,
+                                        amount: payment.amount,
+                                        payment_type: payment.paymentType,
+                                        reference: payment.reference,
+                                        status: payment.status
+                                    });
+                                }
+                                
+                                await loadClients();
+                                await loadPayments();
+                                setSyncStatus('synced');
                                 alert('✅ Data restored successfully!');
                             }
                         } else {
                             alert('❌ Invalid backup file format');
                         }
                     } catch (error) {
+                        console.error('Error restoring backup:', error);
                         alert('❌ Error reading backup file: ' + error.message);
+                        setSyncStatus('error');
                     }
                 };
                 reader.readAsText(file);
@@ -1299,15 +1438,22 @@
             input.click();
         }
 
-        function clearAllData() {
-            if (confirm('⚠️ WARNING: This will delete ALL clients and payments data. This cannot be undone!\n\nAre you absolutely sure?')) {
+        async function clearAllData() {
+            if (confirm('⚠️ WARNING: This will delete ALL clients and payments data from the cloud. This cannot be undone!\n\nAre you absolutely sure?')) {
                 if (confirm('🔴 FINAL WARNING: Click OK to permanently delete everything')) {
-                    clients = [];
-                    payments = [];
-                    saveData();
-                    renderClients();
-                    renderPayments();
-                    alert('✅ All data has been cleared');
+                    try {
+                        setSyncStatus('syncing');
+                        await supabase.from('clients').delete().neq('id', 0);
+                        await supabase.from('payments').delete().neq('id', 0);
+                        await loadClients();
+                        await loadPayments();
+                        setSyncStatus('synced');
+                        alert('✅ All data has been cleared');
+                    } catch (error) {
+                        console.error('Error clearing data:', error);
+                        alert('❌ Error clearing data');
+                        setSyncStatus('error');
+                    }
                 }
             }
         }
@@ -1318,7 +1464,6 @@
             const headers = Object.keys(data[0]).join(',');
             const rows = data.map(row => {
                 return Object.values(row).map(value => {
-                    // Escape values that contain commas or quotes
                     if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
                         return `"${value.replace(/"/g, '""')}"`;
                     }
@@ -1341,9 +1486,9 @@
             window.URL.revokeObjectURL(url);
         }
 
-        // Initialize
-        renderPayments();
-        renderClients();
+        // Initialize - Load data from Supabase
+        loadClients();
+        loadPayments();
     </script>
 </body>
 </html>
