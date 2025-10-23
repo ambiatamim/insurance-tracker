@@ -1,751 +1,4 @@
-        function getUniqueMonths() {
-            const months = payments
-                .filter(p => p.dateReceived)
-                .map(p => formatMonth(p.dateReceived))
-                .filter((v, i, a) => a.indexOf(v) === i)
-                .sort((a, b) => new Date(a) - new Date(b));
-            return months;
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName + '-tab').classList.add('active');
-
-            if (tabName === 'summary') renderSummary();
-            if (tabName === 'clientFilter') updateClientFilterDropdown();
-            if (tabName === 'monthFilter') updateMonthFilterDropdown();
-        }
-
-        // Render functions
-        function getFilteredPayments() {
-            return payments.filter(payment => {
-                return !paymentsSearchTerm || 
-                    payment.clientName.toLowerCase().includes(paymentsSearchTerm.toLowerCase()) ||
-                    payment.reference.toLowerCase().includes(paymentsSearchTerm.toLowerCase()) ||
-                    getClientPolicy(payment.clientName).toLowerCase().includes(paymentsSearchTerm.toLowerCase());
-            });
-        }
-
-        function getFilteredClients() {
-            return clients.filter(client => {
-                return !clientsSearchTerm || 
-                    client.name.toLowerCase().includes(clientsSearchTerm.toLowerCase()) ||
-                    client.policy.toLowerCase().includes(clientsSearchTerm.toLowerCase()) ||
-                    client.email.toLowerCase().includes(clientsSearchTerm.toLowerCase()) ||
-                    client.phone.includes(clientsSearchTerm);
-            });
-        }
-
-        function renderPayments() {
-            const tbody = document.getElementById('payments-tbody');
-            tbody.innerHTML = '';
-
-            const filteredPayments = getFilteredPayments();
-            const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
-            const startIndex = (paymentsPage - 1) * paymentsPerPage;
-            const endIndex = startIndex + paymentsPerPage;
-            const pagePayments = filteredPayments.slice(startIndex, endIndex);
-
-            pagePayments.forEach(payment => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><input type="date" value="${payment.dateReceived || ''}" onchange="updatePayment(${payment.id}, 'dateReceived', this.value)" style="width: 150px;"></td>
-                    <td>${formatMonth(payment.dateReceived)}</td>
-                    <td>
-                        <select onchange="updatePayment(${payment.id}, 'clientName', this.value)" style="width: 200px;">
-                            <option value="">Select Client</option>
-                            ${clients.map(c => `<option value="${c.name}" ${c.name === payment.clientName ? 'selected' : ''}>${c.name}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td>${getClientPolicy(payment.clientName)}</td>
-                    <td><input type="number" step="0.01" value="${payment.amount || ''}" onchange="updatePayment(${payment.id}, 'amount', this.value)" style="width: 100px;"></td>
-                    <td>
-                        <select onchange="updatePayment(${payment.id}, 'paymentType', this.value)" style="width: 100px;">
-                            ${paymentTypes.map(t => `<option value="${t}" ${t === payment.paymentType ? 'selected' : ''}>${t}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td><input type="text" value="${payment.reference || ''}" onchange="updatePayment(${payment.id}, 'reference', this.value)" style="width: 150px;"></td>
-                    <td>
-                        <select onchange="updatePayment(${payment.id}, 'status', this.value)" style="width: 100px;">
-                            ${statuses.map(s => `<option value="${s}" ${s === payment.status ? 'selected' : ''}>${s}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td><button class="btn btn-danger" onclick="deletePayment(${payment.id})">🗑️</button></td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            renderPaymentsPagination(filteredPayments.length, totalPages);
-        }
-
-        function renderPaymentsPagination(totalItems, totalPages) {
-            const paginationDiv = document.getElementById('payments-pagination');
-            if (!paginationDiv) return;
-
-            const startItem = totalItems === 0 ? 0 : (paymentsPage - 1) * paymentsPerPage + 1;
-            const endItem = Math.min(paymentsPage * paymentsPerPage, totalItems);
-
-            let paginationHTML = `
-                <div class="pagination-info">
-                    Showing ${startItem}-${endItem} of ${totalItems} payments
-                </div>
-                <div class="pagination-controls">
-                    <button class="pagination-btn" onclick="changePaymentsPage(1)" ${paymentsPage === 1 ? 'disabled' : ''}>
-                        ⏮️ First
-                    </button>
-                    <button class="pagination-btn" onclick="changePaymentsPage(${paymentsPage - 1})" ${paymentsPage === 1 ? 'disabled' : ''}>
-                        ◀️ Prev
-                    </button>
-            `;
-
-            const maxPageButtons = 5;
-            let startPage = Math.max(1, paymentsPage - Math.floor(maxPageButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
-            
-            if (endPage - startPage < maxPageButtons - 1) {
-                startPage = Math.max(1, endPage - maxPageButtons + 1);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button class="pagination-btn ${i === paymentsPage ? 'active' : ''}" onclick="changePaymentsPage(${i})">
-                        ${i}
-                    </button>
-                `;
-            }
-
-            paginationHTML += `
-                    <button class="pagination-btn" onclick="changePaymentsPage(${paymentsPage + 1})" ${paymentsPage === totalPages || totalPages === 0 ? 'disabled' : ''}>
-                        Next ▶️
-                    </button>
-                    <button class="pagination-btn" onclick="changePaymentsPage(${totalPages})" ${paymentsPage === totalPages || totalPages === 0 ? 'disabled' : ''}>
-                        Last ⏭️
-                    </button>
-                </div>
-            `;
-
-            paginationDiv.innerHTML = paginationHTML;
-        }
-
-        function changePaymentsPage(page) {
-            paymentsPage = page;
-            renderPayments();
-        }
-
-        function filterPayments() {
-            paymentsPage = 1;
-            renderPayments();
-        }
-
-        function clearPaymentsFilters() {
-            paymentsSearchTerm = '';
-            document.getElementById('payments-search').value = '';
-            paymentsPage = 1;
-            renderPayments();
-        }
-
-        function renderClients() {
-            const tbody = document.getElementById('clients-tbody');
-            tbody.innerHTML = '';
-
-            const filteredClients = getFilteredClients();
-            const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
-            const startIndex = (clientsPage - 1) * clientsPerPage;
-            const endIndex = startIndex + clientsPerPage;
-            const pageClients = filteredClients.slice(startIndex, endIndex);
-
-            pageClients.forEach(client => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><input type="text" value="${client.name || ''}" onchange="updateClient(${client.id}, 'name', this.value)"></td>
-                    <td><input type="text" value="${client.policy || ''}" onchange="updateClient(${client.id}, 'policy', this.value)"></td>
-                    <td><input type="date" value="${client.expDate || ''}" onchange="updateClient(${client.id}, 'expDate', this.value)" style="width: 150px;"></td>
-                    <td><input type="tel" value="${client.phone || ''}" onchange="updateClient(${client.id}, 'phone', this.value)"></td>
-                    <td><input type="email" value="${client.email || ''}" onchange="updateClient(${client.id}, 'email', this.value)"></td>
-                    <td><input type="text" value="${client.notes || ''}" onchange="updateClient(${client.id}, 'notes', this.value)"></td>
-                    <td><button class="btn btn-danger" onclick="deleteClient(${client.id})">🗑️</button></td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            renderClientsPagination(filteredClients.length, totalPages);
-        }
-
-        function renderClientsPagination(totalItems, totalPages) {
-            const paginationDiv = document.getElementById('clients-pagination');
-            if (!paginationDiv) return;
-
-            const startItem = totalItems === 0 ? 0 : (clientsPage - 1) * clientsPerPage + 1;
-            const endItem = Math.min(clientsPage * clientsPerPage, totalItems);
-
-            let paginationHTML = `
-                <div class="pagination-info">
-                    Showing ${startItem}-${endItem} of ${totalItems} clients
-                </div>
-                <div class="pagination-controls">
-                    <button class="pagination-btn" onclick="changeClientsPage(1)" ${clientsPage === 1 ? 'disabled' : ''}>
-                        ⏮️ First
-                    </button>
-                    <button class="pagination-btn" onclick="changeClientsPage(${clientsPage - 1})" ${clientsPage === 1 ? 'disabled' : ''}>
-                        ◀️ Prev
-                    </button>
-            `;
-
-            const maxPageButtons = 5;
-            let startPage = Math.max(1, clientsPage - Math.floor(maxPageButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
-            
-            if (endPage - startPage < maxPageButtons - 1) {
-                startPage = Math.max(1, endPage - maxPageButtons + 1);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button class="pagination-btn ${i === clientsPage ? 'active' : ''}" onclick="changeClientsPage(${i})">
-                        ${i}
-                    </button>
-                `;
-            }
-
-            paginationHTML += `
-                    <button class="pagination-btn" onclick="changeClientsPage(${clientsPage + 1})" ${clientsPage === totalPages || totalPages === 0 ? 'disabled' : ''}>
-                        Next ▶️
-                    </button>
-                    <button class="pagination-btn" onclick="changeClientsPage(${totalPages})" ${clientsPage === totalPages || totalPages === 0 ? 'disabled' : ''}>
-                        Last ⏭️
-                    </button>
-                </div>
-            `;
-
-            paginationDiv.innerHTML = paginationHTML;
-        }
-
-        function changeClientsPage(page) {
-            clientsPage = page;
-            renderClients();
-        }
-
-        function filterClients() {
-            clientsPage = 1;
-            renderClients();
-        }
-
-        function clearClientsFilters() {
-            clientsSearchTerm = '';
-            document.getElementById('clients-search').value = '';
-            clientsPage = 1;
-            renderClients();
-        }
-
-        function renderSummary() {
-            const totalReceived = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-            const numPayments = payments.filter(p => p.amount > 0).length;
-            const avgPayment = numPayments > 0 ? totalReceived / numPayments : 0;
-
-            const kpiGrid = document.getElementById('kpi-grid');
-            kpiGrid.innerHTML = `
-                <div class="kpi-card blue">
-                    <div>
-                        <div class="kpi-label">Total Received</div>
-                        <div class="kpi-value">${totalReceived.toFixed(2)}</div>
-                    </div>
-                    <div class="kpi-icon">💰</div>
-                </div>
-                <div class="kpi-card green">
-                    <div>
-                        <div class="kpi-label">Total Payments</div>
-                        <div class="kpi-value">${numPayments}</div>
-                    </div>
-                    <div class="kpi-icon">📊</div>
-                </div>
-                <div class="kpi-card purple">
-                    <div>
-                        <div class="kpi-label">Avg Payment</div>
-                        <div class="kpi-value">${avgPayment.toFixed(2)}</div>
-                    </div>
-                    <div class="kpi-icon">👥</div>
-                </div>
-            `;
-
-            const paymentTypesDiv = document.getElementById('payment-types');
-            let typesHTML = '';
-            paymentTypes.forEach(type => {
-                const total = payments.filter(p => p.paymentType === type).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-                const percent = totalReceived > 0 ? (total / totalReceived * 100).toFixed(1) : 0;
-                typesHTML += `
-                    <div class="payment-type-card">
-                        <span class="payment-type-name">${type}</span>
-                        <div style="text-align: right;">
-                            <div class="payment-type-amount">${total.toFixed(2)}</div>
-                            <div class="payment-type-percent">${percent}%</div>
-                        </div>
-                    </div>
-                `;
-            });
-            paymentTypesDiv.innerHTML = typesHTML;
-
-            const monthlySummary = document.getElementById('monthly-summary');
-            let monthsHTML = '';
-            getUniqueMonths().forEach(month => {
-                const monthPayments = payments.filter(p => formatMonth(p.dateReceived) === month);
-                const total = monthPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-                const count = monthPayments.length;
-                const avg = count > 0 ? total / count : 0;
-                monthsHTML += `
-                    <tr>
-                        <td style="font-weight: 500;">${month}</td>
-                        <td style="text-align: right;">${total.toFixed(2)}</td>
-                        <td style="text-align: right;">${count}</td>
-                        <td style="text-align: right;">${avg.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-            monthlySummary.innerHTML = monthsHTML;
-        }
-
-        function updateClientFilterDropdown() {
-            const select = document.getElementById('client-filter');
-            select.innerHTML = '<option value="">Select a client...</option>';
-            clients.forEach(client => {
-                select.innerHTML += `<option value="${client.name}">${client.name}</option>`;
-            });
-        }
-
-        function updateMonthFilterDropdown() {
-            const select = document.getElementById('month-filter');
-            select.innerHTML = '<option value="">Select a month...</option>';
-            getUniqueMonths().forEach(month => {
-                select.innerHTML += `<option value="${month}">${month}</option>`;
-            });
-        }
-
-        function filterByClient() {
-            const clientName = document.getElementById('client-filter').value;
-            const resultsDiv = document.getElementById('client-filter-results');
-
-            if (!clientName) {
-                resultsDiv.innerHTML = '';
-                return;
-            }
-
-            const clientPayments = payments.filter(p => p.clientName.trim() === clientName.trim());
-            const total = clientPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-            const count = clientPayments.length;
-            const uniqueMonths = [...new Set(clientPayments.map(p => formatMonth(p.dateReceived)))].length;
-            const avgPerMonth = uniqueMonths > 0 ? total / uniqueMonths : 0;
-
-            let html = `
-                <div class="kpi-grid" style="margin-bottom: 24px;">
-                    <div class="kpi-card blue">
-                        <div>
-                            <div class="kpi-label">Total Paid</div>
-                            <div class="kpi-value">${total.toFixed(2)}</div>
-                        </div>
-                    </div>
-                    <div class="kpi-card green">
-                        <div>
-                            <div class="kpi-label"># of Payments</div>
-                            <div class="kpi-value">${count}</div>
-                        </div>
-                    </div>
-                    <div class="kpi-card purple">
-                        <div>
-                            <div class="kpi-label">Avg per Month</div>
-                            <div class="kpi-value">${avgPerMonth.toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-                <h3 style="margin-bottom: 16px;">Payment History</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Month</th>
-                            <th>Policy #</th>
-                            <th>Amount</th>
-                            <th>Type</th>
-                            <th>Reference</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            clientPayments.forEach(payment => {
-                const statusClass = payment.status === 'Paid' ? 'status-paid' : 'status-pending';
-                html += `
-                    <tr>
-                        <td>${formatDate(payment.dateReceived)}</td>
-                        <td>${formatMonth(payment.dateReceived)}</td>
-                        <td>${getClientPolicy(payment.clientName)}</td>
-                        <td style="font-weight: 600;">${parseFloat(payment.amount).toFixed(2)}</td>
-                        <td>${payment.paymentType}</td>
-                        <td>${payment.reference}</td>
-                        <td><span class="status-badge ${statusClass}">${payment.status}</span></td>
-                    </tr>
-                `;
-            });
-
-            html += '</tbody></table>';
-            resultsDiv.innerHTML = html;
-        }
-
-        function filterByMonth() {
-            const month = document.getElementById('month-filter').value;
-            const resultsDiv = document.getElementById('month-filter-results');
-
-            if (!month) {
-                resultsDiv.innerHTML = '';
-                return;
-            }
-
-            const monthPayments = payments.filter(p => formatMonth(p.dateReceived) === month);
-            const total = monthPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-            const count = monthPayments.length;
-            const avg = count > 0 ? total / count : 0;
-
-            let html = `
-                <div class="kpi-grid" style="margin-bottom: 24px;">
-                    <div class="kpi-card blue">
-                        <div>
-                            <div class="kpi-label">Total Paid</div>
-                            <div class="kpi-value">${total.toFixed(2)}</div>
-                        </div>
-                    </div>
-                    <div class="kpi-card green">
-                        <div>
-                            <div class="kpi-label"># of Payments</div>
-                            <div class="kpi-value">${count}</div>
-                        </div>
-                    </div>
-                    <div class="kpi-card purple">
-                        <div>
-                            <div class="kpi-label">Avg Payment</div>
-                            <div class="kpi-value">${avg.toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-                <h3 style="margin-bottom: 16px;">Payments for ${month}</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Client Name</th>
-                            <th>Policy #</th>
-                            <th>Amount</th>
-                            <th>Type</th>
-                            <th>Reference</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            monthPayments.forEach(payment => {
-                const statusClass = payment.status === 'Paid' ? 'status-paid' : 'status-pending';
-                html += `
-                    <tr>
-                        <td>${formatDate(payment.dateReceived)}</td>
-                        <td>${payment.clientName}</td>
-                        <td>${getClientPolicy(payment.clientName)}</td>
-                        <td style="font-weight: 600;">${parseFloat(payment.amount).toFixed(2)}</td>
-                        <td>${payment.paymentType}</td>
-                        <td>${payment.reference}</td>
-                        <td><span class="status-badge ${statusClass}">${payment.status}</span></td>
-                    </tr>
-                `;
-            });
-
-            html += '</tbody></table>';
-            resultsDiv.innerHTML = html;
-        }
-
-        // CRUD operations
-        async function addClient() {
-            try {
-                setSyncStatus('syncing');
-                const { data, error } = await supabase
-                    .from('clients')
-                    .insert([{ name: '', policy: '', exp_date: '', phone: '', email: '', notes: '' }])
-                    .select();
-                
-                if (error) throw error;
-                
-                await loadClients();
-                setSyncStatus('synced');
-            } catch (error) {
-                console.error('Error adding client:', error);
-                alert('Error adding client to database');
-                setSyncStatus('error');
-            }
-        }
-
-        async function deleteClient(id) {
-            if (confirm('Are you sure you want to delete this client?')) {
-                try {
-                    setSyncStatus('syncing');
-                    const { error } = await supabase
-                        .from('clients')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) throw error;
-                    
-                    await loadClients();
-                    setSyncStatus('synced');
-                } catch (error) {
-                    console.error('Error deleting client:', error);
-                    alert('Error deleting client from database');
-                    setSyncStatus('error');
-                }
-            }
-        }
-
-        async function updateClient(id, field, value) {
-            try {
-                setSyncStatus('syncing');
-                const dbField = field === 'expDate' ? 'exp_date' : field;
-                const { error } = await supabase
-                    .from('clients')
-                    .update({ [dbField]: value })
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
-                const client = clients.find(c => c.id === id);
-                if (client) {
-                    client[field] = value;
-                }
-                renderPayments();
-                setSyncStatus('synced');
-            } catch (error) {
-                console.error('Error updating client:', error);
-                setSyncStatus('error');
-            }
-        }
-
-        async function addPayment() {
-            try {
-                setSyncStatus('syncing');
-                const today = new Date().toISOString().split('T')[0];
-                const { data, error } = await supabase
-                    .from('payments')
-                    .insert([{ 
-                        date_received: today, 
-                        client_name: '', 
-                        amount: 0, 
-                        payment_type: 'Zelle', 
-                        reference: '', 
-                        status: 'Paid' 
-                    }])
-                    .select();
-                
-                if (error) throw error;
-                
-                await loadPayments();
-                setSyncStatus('synced');
-            } catch (error) {
-                console.error('Error adding payment:', error);
-                alert('Error adding payment to database');
-                setSyncStatus('error');
-            }
-        }
-
-        async function deletePayment(id) {
-            if (confirm('Are you sure you want to delete this payment?')) {
-                try {
-                    setSyncStatus('syncing');
-                    const { error} = await supabase
-                        .from('payments')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) throw error;
-                    
-                    await loadPayments();
-                    setSyncStatus('synced');
-                } catch (error) {
-                    console.error('Error deleting payment:', error);
-                    alert('Error deleting payment from database');
-                    setSyncStatus('error');
-                }
-            }
-        }
-
-        async function updatePayment(id, field, value) {
-            try {
-                setSyncStatus('syncing');
-                const dbField = field === 'dateReceived' ? 'date_received' : 
-                               field === 'clientName' ? 'client_name' :
-                               field === 'paymentType' ? 'payment_type' : field;
-                
-                const { error } = await supabase
-                    .from('payments')
-                    .update({ [dbField]: value })
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
-                const payment = payments.find(p => p.id === id);
-                if (payment) {
-                    payment[field] = value;
-                }
-                renderPayments();
-                setSyncStatus('synced');
-            } catch (error) {
-                console.error('Error updating payment:', error);
-                setSyncStatus('error');
-            }
-        }
-
-        // Export functions
-        function exportPayments() {
-            const csv = convertToCSV(payments);
-            downloadCSV(csv, 'payments.csv');
-        }
-
-        function exportClients() {
-            const csv = convertToCSV(clients);
-            downloadCSV(csv, 'clients.csv');
-        }
-
-        function backupData() {
-            const backup = {
-                clients: clients,
-                payments: payments,
-                backupDate: new Date().toISOString(),
-                version: '1.0'
-            };
-            const json = JSON.stringify(backup, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `insurance-backup-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            alert('✅ Backup downloaded successfully!');
-        }
-
-        async function restoreData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = async function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = async function(event) {
-                    try {
-                        const backup = JSON.parse(event.target.result);
-                        if (backup.clients && backup.payments) {
-                            if (confirm('⚠️ This will replace all current data in the cloud database. Are you sure?')) {
-                                setSyncStatus('syncing');
-                                
-                                await supabase.from('clients').delete().neq('id', 0);
-                                await supabase.from('payments').delete().neq('id', 0);
-                                
-                                for (const client of backup.clients) {
-                                    await supabase.from('clients').insert({
-                                        name: client.name,
-                                        policy: client.policy,
-                                        exp_date: client.expDate,
-                                        phone: client.phone,
-                                        email: client.email,
-                                        notes: client.notes
-                                    });
-                                }
-                                
-                                for (const payment of backup.payments) {
-                                    await supabase.from('payments').insert({
-                                        date_received: payment.dateReceived,
-                                        client_name: payment.clientName,
-                                        amount: payment.amount,
-                                        payment_type: payment.paymentType,
-                                        reference: payment.reference,
-                                        status: payment.status
-                                    });
-                                }
-                                
-                                await loadClients();
-                                await loadPayments();
-                                setSyncStatus('synced');
-                                alert('✅ Data restored successfully!');
-                            }
-                        } else {
-                            alert('❌ Invalid backup file format');
-                        }
-                    } catch (error) {
-                        console.error('Error restoring backup:', error);
-                        alert('❌ Error reading backup file: ' + error.message);
-                        setSyncStatus('error');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        async function clearAllData() {
-            if (confirm('⚠️ WARNING: This will delete ALL clients and payments data from the cloud. This cannot be undone!\n\nAre you absolutely sure?')) {
-                if (confirm('🔴 FINAL WARNING: Click OK to permanently delete everything')) {
-                    try {
-                        setSyncStatus('syncing');
-                        await supabase.from('clients').delete().neq('id', 0);
-                        await supabase.from('payments').delete().neq('id', 0);
-                        await loadClients();
-                        await loadPayments();
-                        setSyncStatus('synced');
-                        alert('✅ All data has been cleared');
-                    } catch (error) {
-                        console.error('Error clearing data:', error);
-                        alert('❌ Error clearing data');
-                        setSyncStatus('error');
-                    }
-                }
-            }
-        }
-
-        function convertToCSV(data) {
-            if (data.length === 0) return '';
-            
-            const headers = Object.keys(data[0]).join(',');
-            const rows = data.map(row => {
-                return Object.values(row).map(value => {
-                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                        return `"${value.replace(/"/g, '""')}"`;
-                    }
-                    return value;
-                }).join(',');
-            });
-            
-            return [headers, ...rows].join('\n');
-        }
-
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Initialize - Check authentication on page load
-        checkAuth();
-    </script>
-</body>
-</html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -844,34 +97,9 @@
             cursor: not-allowed;
         }
 
-        .logout-btn {
-            padding: 8px 16px;
-            background: #6b7280;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: #4b5563;
-        }
-
         .error-message {
             background: #fee2e2;
             color: #991b1b;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .success-message {
-            background: #dcfce7;
-            color: #166534;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 20px;
@@ -885,12 +113,6 @@
 
         .app-container.authenticated {
             display: block;
-        }
-
-        .user-info {
-            color: #6b7280;
-            font-size: 13px;
-            padding: 12px;
         }
 
         .container {
@@ -936,112 +158,6 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .content-header h2 {
-            font-size: 20px;
-            color: #111827;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 10px 16px;
-            border-radius: 6px;
-            border: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #15803d;
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-            padding: 10px 16px;
-            font-size: 14px;
-        }
-
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-
-        thead {
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        th {
-            padding: 12px 16px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #374151;
-        }
-
-        tr:hover {
-            background: #f9fafb;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
         .tab-content {
             display: none;
         }
@@ -1050,191 +166,7 @@
             display: block;
         }
 
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .kpi-card {
-            padding: 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .kpi-card.blue {
-            background: #eff6ff;
-        }
-
-        .kpi-card.green {
-            background: #f0fdf4;
-        }
-
-        .kpi-card.purple {
-            background: #faf5ff;
-        }
-
-        .kpi-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #6b7280;
-            margin-bottom: 8px;
-        }
-
-        .kpi-value {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .kpi-card.blue .kpi-value {
-            color: #1e40af;
-        }
-
-        .kpi-card.green .kpi-value {
-            color: #15803d;
-        }
-
-        .kpi-card.purple .kpi-value {
-            color: #7c3aed;
-        }
-
-        .kpi-icon {
-            font-size: 48px;
-            opacity: 0.6;
-        }
-
-        .payment-type-card {
-            padding: 16px;
-            background: #f9fafb;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .payment-type-name {
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .payment-type-amount {
-            font-size: 20px;
-            font-weight: bold;
-            color: #111827;
-        }
-
-        .payment-type-percent {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .filter-section {
-            margin-bottom: 24px;
-        }
-
-        .filter-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 8px;
-        }
-
-        .filter-select {
-            max-width: 400px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-paid {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .pagination-info {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .pagination-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .pagination-btn {
-            padding: 6px 12px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .pagination-btn:hover:not(:disabled) {
-            background: #f3f4f6;
-            border-color: #9ca3af;
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-btn.active {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-
-        .search-filter-section {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 250px;
-            max-width: 400px;
-        }
-
-        .search-box input {
-            width: 100%;
-        }
-
-        .clear-filters-btn {
+        .logout-btn {
             padding: 8px 16px;
             background: #6b7280;
             color: white;
@@ -1245,19 +177,14 @@
             transition: all 0.2s;
         }
 
-        .clear-filters-btn:hover {
+        .logout-btn:hover {
             background: #4b5563;
         }
 
-        .summary-section {
-            margin-bottom: 32px;
-        }
-
-        .summary-section h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 16px;
+        .user-info {
+            color: #6b7280;
+            font-size: 13px;
+            padding: 12px;
         }
 
         .sync-status {
@@ -1280,46 +207,10 @@
             color: #92400e;
         }
 
-        .sync-status.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
         .loading {
             text-align: center;
             padding: 40px;
             color: #6b7280;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .tabs {
-                overflow-x: auto;
-                flex-wrap: nowrap;
-            }
-
-            .tab {
-                white-space: nowrap;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th, td {
-                padding: 8px;
-            }
-
-            .login-box {
-                padding: 24px;
-            }
-        }
-
-        input[type="file"] {
-            display: none;
         }
     </style>
 </head>
@@ -1337,7 +228,6 @@
                         type="email" 
                         id="email" 
                         placeholder="your-email@example.com"
-                        autocomplete="email"
                         required
                     >
                 </div>
@@ -1347,7 +237,6 @@
                         type="password" 
                         id="password" 
                         placeholder="Enter your password"
-                        autocomplete="current-password"
                         required
                     >
                 </div>
@@ -1356,191 +245,50 @@
         </div>
     </div>
 
-    <!-- App Container (hidden until authenticated) -->
+    <!-- App Container -->
     <div id="app-container" class="app-container">
-    <div class="container">
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('payments')">Payments</button>
-            <button class="tab" onclick="switchTab('clients')">Clients</button>
-            <button class="tab" onclick="switchTab('summary')">Summary</button>
-            <button class="tab" onclick="switchTab('clientFilter')">Client Filter</button>
-            <button class="tab" onclick="switchTab('monthFilter')">Month Filter</button>
-            <div style="margin-left: auto; padding: 12px; display: flex; align-items: center; gap: 12px;">
-                <span id="user-email" class="user-info"></span>
-                <span id="sync-status" class="sync-status synced">☁️ Synced</span>
-                <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+        <div class="container">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('payments')">Payments</button>
+                <button class="tab" onclick="switchTab('clients')">Clients</button>
+                <button class="tab" onclick="switchTab('summary')">Summary</button>
+                <div style="margin-left: auto; padding: 12px; display: flex; align-items: center; gap: 12px;">
+                    <span id="user-email" class="user-info"></span>
+                    <span id="sync-status" class="sync-status synced">☁️ Synced</span>
+                    <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Payments Tab -->
-        <div id="payments-tab" class="tab-content active">
-            <div class="content">
-                <div class="content-header">
+            <!-- Payments Tab -->
+            <div id="payments-tab" class="tab-content active">
+                <div class="content">
                     <h2>Payment Records</h2>
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="addPayment()">➕ Add Payment</button>
-                        <button class="btn btn-success" onclick="exportPayments()">📥 Export</button>
+                    <div id="payments-loading" class="loading">Loading payments...</div>
+                    <div id="payments-content" style="display: none;">
+                        <p>Payments will appear here</p>
                     </div>
-                </div>
-                
-                <div class="search-filter-section">
-                    <div class="search-box">
-                        <input 
-                            type="text" 
-                            id="payments-search" 
-                            placeholder="🔍 Search by client, policy, or reference..." 
-                            oninput="paymentsSearchTerm = this.value; filterPayments()"
-                        >
-                    </div>
-                    <button class="clear-filters-btn" onclick="clearPaymentsFilters()">
-                        ✖️ Clear Search
-                    </button>
-                </div>
-
-                <div id="payments-loading" class="loading">Loading payments...</div>
-                <div id="payments-content" style="display: none;">
-                    <div style="overflow-x: auto;">
-                        <table id="payments-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Month</th>
-                                    <th>Client Name</th>
-                                    <th>Policy #</th>
-                                    <th>Amount</th>
-                                    <th>Type</th>
-                                    <th>Reference</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="payments-tbody"></tbody>
-                        </table>
-                    </div>
-                    <div id="payments-pagination" class="pagination"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Clients Tab -->
-        <div id="clients-tab" class="tab-content">
-            <div class="content">
-                <div class="content-header">
+            <!-- Clients Tab -->
+            <div id="clients-tab" class="tab-content">
+                <div class="content">
                     <h2>Client Database</h2>
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="addClient()">➕ Add Client</button>
-                        <button class="btn btn-success" onclick="exportClients()">📥 Export</button>
+                    <div id="clients-loading" class="loading">Loading clients...</div>
+                    <div id="clients-content" style="display: none;">
+                        <p>Clients will appear here</p>
                     </div>
                 </div>
-                
-                <div class="search-filter-section">
-                    <div class="search-box">
-                        <input 
-                            type="text" 
-                            id="clients-search" 
-                            placeholder="🔍 Search by name, policy, email, or phone..." 
-                            oninput="clientsSearchTerm = this.value; filterClients()"
-                        >
-                    </div>
-                    <button class="clear-filters-btn" onclick="clearClientsFilters()">
-                        ✖️ Clear Search
-                    </button>
-                </div>
+            </div>
 
-                <div id="clients-loading" class="loading">Loading clients...</div>
-                <div id="clients-content" style="display: none;">
-                    <div style="overflow-x: auto;">
-                        <table id="clients-table">
-                            <thead>
-                                <tr>
-                                    <th>Client Name</th>
-                                    <th>Policy #</th>
-                                    <th>Exp Date</th>
-                                    <th>Phone</th>
-                                    <th>Email</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="clients-tbody"></tbody>
-                        </table>
-                    </div>
-                    <div id="clients-pagination" class="pagination"></div>
+            <!-- Summary Tab -->
+            <div id="summary-tab" class="tab-content">
+                <div class="content">
+                    <h2>Summary Dashboard</h2>
+                    <p>Summary statistics will appear here</p>
                 </div>
             </div>
         </div>
-
-        <!-- Summary Tab -->
-        <div id="summary-tab" class="tab-content">
-            <div class="content">
-                <h2 style="margin-bottom: 20px;">Summary Dashboard</h2>
-                <div class="kpi-grid" id="kpi-grid"></div>
-                
-                <div class="summary-section">
-                    <h3>Payment Type Breakdown</h3>
-                    <div id="payment-types"></div>
-                </div>
-
-                <div class="summary-section">
-                    <h3>Monthly Summary</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th style="text-align: right;">Total Amount</th>
-                                <th style="text-align: right;"># Payments</th>
-                                <th style="text-align: right;">Avg Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody id="monthly-summary"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Client Filter Tab -->
-        <div id="clientFilter-tab" class="tab-content">
-            <div class="content">
-                <h2 style="margin-bottom: 20px;">Client Payment History</h2>
-                <div class="filter-section">
-                    <label class="filter-label">Choose Client:</label>
-                    <select id="client-filter" class="filter-select" onchange="filterByClient()">
-                        <option value="">Select a client...</option>
-                    </select>
-                </div>
-                <div id="client-filter-results"></div>
-            </div>
-        </div>
-
-        <!-- Month Filter Tab -->
-        <div id="monthFilter-tab" class="tab-content">
-            <div class="content">
-                <h2 style="margin-bottom: 20px;">Monthly Payments View</h2>
-                <div class="filter-section">
-                    <label class="filter-label">Choose Month:</label>
-                    <select id="month-filter" class="filter-select" onchange="filterByMonth()">
-                        <option value="">Select a month...</option>
-                    </select>
-                </div>
-                <div id="month-filter-results"></div>
-            </div>
-        </div>
-
-        <!-- Footer with data management buttons -->
-        <div class="content" style="margin-top: 24px;">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px;">
-                <button class="btn btn-success" onclick="backupData()" title="Download a backup of all your data">
-                    📦 Backup Data
-                </button>
-                <button class="btn btn-primary" onclick="restoreData()" title="Restore data from a backup file">
-                    📥 Restore Data
-                </button>
-                <button class="btn btn-danger" onclick="clearAllData()" title="Delete all data and start fresh" style="padding: 10px 16px; font-size: 14px;">
-                    🗑️ Clear All
-                </button>
-            </div>
-        </div>
-    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1550,36 +298,21 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXF5d3R0c3hldHVleWVqZ2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjczODksImV4cCI6MjA3NjMwMzM4OX0.4AZFB2gQ39rsh7JBojZQQMtL3df7_uY_4m1FrVfQQgQ';
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Data storage
-        let clients = [];
-        let payments = [];
+        
         let currentUser = null;
 
-        const paymentTypes = ['Zelle', 'ACH', 'Cash', 'Check'];
-        const statuses = ['Paid', 'Pending'];
-
-        // Pagination state
-        let paymentsPage = 1;
-        let paymentsPerPage = 50;
-        let paymentsSearchTerm = '';
-
-        let clientsPage = 1;
-        let clientsPerPage = 50;
-        let clientsSearchTerm = '';
-
-        // Authentication
+        // Check authentication on page load
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 currentUser = session.user;
                 showApp();
             } else {
-                // Ensure app stays hidden if not authenticated
                 hideApp();
             }
         }
 
+        // Handle login
         async function handleLogin(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
@@ -1609,141 +342,55 @@
             }
         }
 
+        // Handle logout
         async function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
                 await supabase.auth.signOut();
                 currentUser = null;
-                clients = [];
-                payments = [];
                 hideApp();
             }
         }
 
+        // Show app after login
         function showApp() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-container').classList.add('authenticated');
             if (currentUser) {
                 document.getElementById('user-email').textContent = currentUser.email;
             }
-            loadClients();
-            loadPayments();
+            loadData();
         }
 
+        // Hide app and show login
         function hideApp() {
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('app-container').classList.remove('authenticated');
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
-            document.getElementById('auth-message').innerHTML = '';
-            // Hide the data content and show loading states
-            document.getElementById('payments-content').style.display = 'none';
-            document.getElementById('payments-loading').style.display = 'block';
-            document.getElementById('clients-content').style.display = 'none';
-            document.getElementById('clients-loading').style.display = 'block';
         }
 
-        // Sync status
-        function setSyncStatus(status) {
-            const statusEl = document.getElementById('sync-status');
-            statusEl.className = 'sync-status ' + status;
-            if (status === 'synced') {
-                statusEl.innerHTML = '☁️ Synced';
-            } else if (status === 'syncing') {
-                statusEl.innerHTML = '🔄 Syncing...';
-            } else if (status === 'error') {
-                statusEl.innerHTML = '⚠️ Sync Error';
-            }
+        // Load data
+        async function loadData() {
+            document.getElementById('payments-content').innerHTML = '<p>✅ Authenticated! Your data would load here.</p>';
+            document.getElementById('payments-loading').style.display = 'none';
+            document.getElementById('payments-content').style.display = 'block';
+
+            document.getElementById('clients-content').innerHTML = '<p>✅ Authenticated! Your clients would load here.</p>';
+            document.getElementById('clients-loading').style.display = 'none';
+            document.getElementById('clients-content').style.display = 'block';
         }
 
-        // Load data from Supabase (only if authenticated)
-        async function loadClients() {
-            if (!currentUser) {
-                console.error('Not authenticated - cannot load clients');
-                return;
-            }
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            try {
-                const { data, error } = await supabase
-                    .from('clients')
-                    .select('*')
-                    .order('id');
-                
-                if (error) throw error;
-                
-                clients = data.map(c => ({
-                    id: c.id,
-                    name: c.name || '',
-                    policy: c.policy || '',
-                    expDate: c.exp_date || '',
-                    phone: c.phone || '',
-                    email: c.email || '',
-                    notes: c.notes || ''
-                }));
-                
-                document.getElementById('clients-loading').style.display = 'none';
-                document.getElementById('clients-content').style.display = 'block';
-                renderClients();
-            } catch (error) {
-                console.error('Error loading clients:', error);
-                alert('Error loading clients from database');
-                setSyncStatus('error');
-            }
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
         }
 
-        async function loadPayments() {
-            if (!currentUser) {
-                console.error('Not authenticated - cannot load payments');
-                return;
-            }
-            
-            try {
-                const { data, error } = await supabase
-                    .from('payments')
-                    .select('*')
-                    .order('id');
-                
-                if (error) throw error;
-                
-                payments = data.map(p => ({
-                    id: p.id,
-                    dateReceived: p.date_received || '',
-                    clientName: p.client_name || '',
-                    amount: p.amount || 0,
-                    paymentType: p.payment_type || 'Zelle',
-                    reference: p.reference || '',
-                    status: p.status || 'Paid'
-                }));
-                
-                document.getElementById('payments-loading').style.display = 'none';
-                document.getElementById('payments-content').style.display = 'block';
-                renderPayments();
-                setSyncStatus('synced');
-            } catch (error) {
-                console.error('Error loading payments:', error);
-                alert('Error loading payments from database');
-                setSyncStatus('error');
-            }
-        }
-
-        // Helper functions
-        function getClientPolicy(clientName) {
-            const client = clients.find(c => c.name.trim() === clientName.trim());
-            return client ? client.policy : '';
-        }
-
-        function formatMonth(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US');
-        }
-
-        function getUniqueMonths() {
-            const months = payments
-                .filter(p => p.dateReceived)
-                .map(p =>
+        // Initialize
+        checkAuth();
+    </script>
+</body>
+</html>
