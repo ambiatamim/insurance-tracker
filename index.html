@@ -1,4 +1,4 @@
-function getUniqueMonths() {
+        function getUniqueMonths() {
             const months = payments
                 .filter(p => p.dateReceived)
                 .map(p => formatMonth(p.dateReceived))
@@ -1574,6 +1574,9 @@ function getUniqueMonths() {
             if (session) {
                 currentUser = session.user;
                 showApp();
+            } else {
+                // Ensure app stays hidden if not authenticated
+                hideApp();
             }
         }
 
@@ -1610,6 +1613,8 @@ function getUniqueMonths() {
             if (confirm('Are you sure you want to logout?')) {
                 await supabase.auth.signOut();
                 currentUser = null;
+                clients = [];
+                payments = [];
                 hideApp();
             }
         }
@@ -1617,7 +1622,9 @@ function getUniqueMonths() {
         function showApp() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-container').classList.add('authenticated');
-            document.getElementById('user-email').textContent = currentUser.email;
+            if (currentUser) {
+                document.getElementById('user-email').textContent = currentUser.email;
+            }
             loadClients();
             loadPayments();
         }
@@ -1628,6 +1635,11 @@ function getUniqueMonths() {
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
             document.getElementById('auth-message').innerHTML = '';
+            // Hide the data content and show loading states
+            document.getElementById('payments-content').style.display = 'none';
+            document.getElementById('payments-loading').style.display = 'block';
+            document.getElementById('clients-content').style.display = 'none';
+            document.getElementById('clients-loading').style.display = 'block';
         }
 
         // Sync status
