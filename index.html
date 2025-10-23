@@ -1,747 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insurance Payment Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #f3f4f6;
-            padding: 20px;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .tabs {
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .tab {
-            padding: 16px 24px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 14px;
-            font-weight: 500;
-            color: #6b7280;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: all 0.2s;
-        }
-
-        .tab:hover {
-            color: #111827;
-        }
-
-        .tab.active {
-            color: #2563eb;
-            border-bottom-color: #2563eb;
-        }
-
-        .content {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .content-header h2 {
-            font-size: 20px;
-            color: #111827;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 10px 16px;
-            border-radius: 6px;
-            border: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #15803d;
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-            padding: 10px 16px;
-            font-size: 14px;
-        }
-
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-
-        thead {
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        th {
-            padding: 12px 16px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #374151;
-        }
-
-        tr:hover {
-            background: #f9fafb;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .kpi-card {
-            padding: 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .kpi-card.blue {
-            background: #eff6ff;
-        }
-
-        .kpi-card.green {
-            background: #f0fdf4;
-        }
-
-        .kpi-card.purple {
-            background: #faf5ff;
-        }
-
-        .kpi-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #6b7280;
-            margin-bottom: 8px;
-        }
-
-        .kpi-value {
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .kpi-card.blue .kpi-value {
-            color: #1e40af;
-        }
-
-        .kpi-card.green .kpi-value {
-            color: #15803d;
-        }
-
-        .kpi-card.purple .kpi-value {
-            color: #7c3aed;
-        }
-
-        .kpi-icon {
-            font-size: 48px;
-            opacity: 0.6;
-        }
-
-        .payment-type-card {
-            padding: 16px;
-            background: #f9fafb;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .payment-type-name {
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .payment-type-amount {
-            font-size: 20px;
-            font-weight: bold;
-            color: #111827;
-        }
-
-        .payment-type-percent {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .filter-section {
-            margin-bottom: 24px;
-        }
-
-        .filter-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 8px;
-        }
-
-        .filter-select {
-            max-width: 400px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-paid {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .pagination-info {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .pagination-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .pagination-btn {
-            padding: 6px 12px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .pagination-btn:hover:not(:disabled) {
-            background: #f3f4f6;
-            border-color: #9ca3af;
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-btn.active {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-
-        .search-filter-section {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 250px;
-            max-width: 400px;
-        }
-
-        .search-box input {
-            width: 100%;
-        }
-
-        .clear-filters-btn {
-            padding: 8px 16px;
-            background: #6b7280;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .clear-filters-btn:hover {
-            background: #4b5563;
-        }
-
-        .summary-section {
-            margin-bottom: 32px;
-        }
-
-        .summary-section h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 16px;
-        }
-
-        .sync-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .sync-status.synced {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .sync-status.syncing {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .sync-status.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6b7280;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .tabs {
-                overflow-x: auto;
-            }
-
-            .tab {
-                white-space: nowrap;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th, td {
-                padding: 8px;
-            }
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('payments')">Payments</button>
-            <button class="tab" onclick="switchTab('clients')">Clients</button>
-            <button class="tab" onclick="switchTab('summary')">Summary</button>
-            <button class="tab" onclick="switchTab('clientFilter')">Client Filter</button>
-            <button class="tab" onclick="switchTab('monthFilter')">Month Filter</button>
-            <div style="margin-left: auto; padding: 12px;">
-                <span id="sync-status" class="sync-status synced">☁️ Synced</span>
-            </div>
-        </div>
-
-        <!-- Payments Tab -->
-        <div id="payments-tab" class="tab-content active">
-            <div class="content">
-                <div class="content-header">
-                    <h2>Payment Records</h2>
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="addPayment()">➕ Add Payment</button>
-                        <button class="btn btn-success" onclick="exportPayments()">📥 Export</button>
-                    </div>
-                </div>
-                
-                <div class="search-filter-section">
-                    <div class="search-box">
-                        <input 
-                            type="text" 
-                            id="payments-search" 
-                            placeholder="🔍 Search by client, policy, or reference..." 
-                            oninput="paymentsSearchTerm = this.value; filterPayments()"
-                        >
-                    </div>
-                    <button class="clear-filters-btn" onclick="clearPaymentsFilters()">
-                        ✖️ Clear Search
-                    </button>
-                </div>
-
-                <div id="payments-loading" class="loading">Loading payments...</div>
-                <div id="payments-content" style="display: none;">
-                    <div style="overflow-x: auto;">
-                        <table id="payments-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Month</th>
-                                    <th>Client Name</th>
-                                    <th>Policy #</th>
-                                    <th>Amount</th>
-                                    <th>Type</th>
-                                    <th>Reference</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="payments-tbody"></tbody>
-                        </table>
-                    </div>
-                    <div id="payments-pagination" class="pagination"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Clients Tab -->
-        <div id="clients-tab" class="tab-content">
-            <div class="content">
-                <div class="content-header">
-                    <h2>Client Database</h2>
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="addClient()">➕ Add Client</button>
-                        <button class="btn btn-success" onclick="exportClients()">📥 Export</button>
-                    </div>
-                </div>
-                
-                <div class="search-filter-section">
-                    <div class="search-box">
-                        <input 
-                            type="text" 
-                            id="clients-search" 
-                            placeholder="🔍 Search by name, policy, email, or phone..." 
-                            oninput="clientsSearchTerm = this.value; filterClients()"
-                        >
-                    </div>
-                    <button class="clear-filters-btn" onclick="clearClientsFilters()">
-                        ✖️ Clear Search
-                    </button>
-                </div>
-
-                <div id="clients-loading" class="loading">Loading clients...</div>
-                <div id="clients-content" style="display: none;">
-                    <div style="overflow-x: auto;">
-                        <table id="clients-table">
-                            <thead>
-                                <tr>
-                                    <th>Client Name</th>
-                                    <th>Policy #</th>
-                                    <th>Exp Date</th>
-                                    <th>Phone</th>
-                                    <th>Email</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="clients-tbody"></tbody>
-                        </table>
-                    </div>
-                    <div id="clients-pagination" class="pagination"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Summary Tab -->
-        <div id="summary-tab" class="tab-content">
-            <div class="content">
-                <h2 style="margin-bottom: 20px;">Summary Dashboard</h2>
-                <div class="kpi-grid" id="kpi-grid"></div>
-                
-                <div class="summary-section">
-                    <h3>Payment Type Breakdown</h3>
-                    <div id="payment-types"></div>
-                </div>
-
-                <div class="summary-section">
-                    <h3>Monthly Summary</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th style="text-align: right;">Total Amount</th>
-                                <th style="text-align: right;"># Payments</th>
-                                <th style="text-align: right;">Avg Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody id="monthly-summary"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Client Filter Tab -->
-        <div id="clientFilter-tab" class="tab-content">
-            <div class="content">
-                <h2 style="margin-bottom: 20px;">Client Payment History</h2>
-                <div class="filter-section">
-                    <label class="filter-label">Choose Client:</label>
-                    <select id="client-filter" class="filter-select" onchange="filterByClient()">
-                        <option value="">Select a client...</option>
-                    </select>
-                </div>
-                <div id="client-filter-results"></div>
-            </div>
-        </div>
-
-        <!-- Month Filter Tab -->
-        <div id="monthFilter-tab" class="tab-content">
-            <div class="content">
-                <h2 style="margin-bottom: 20px;">Monthly Payments View</h2>
-                <div class="filter-section">
-                    <label class="filter-label">Choose Month:</label>
-                    <select id="month-filter" class="filter-select" onchange="filterByMonth()">
-                        <option value="">Select a month...</option>
-                    </select>
-                </div>
-                <div id="month-filter-results"></div>
-            </div>
-        </div>
-
-        <!-- Footer with data management buttons -->
-        <div class="content" style="margin-top: 24px;">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px;">
-                <button class="btn btn-success" onclick="backupData()" title="Download a backup of all your data">
-                    📦 Backup Data
-                </button>
-                <button class="btn btn-primary" onclick="restoreData()" title="Restore data from a backup file">
-                    📥 Restore Data
-                </button>
-                <button class="btn btn-danger" onclick="clearAllData()" title="Delete all data and start fresh" style="padding: 10px 16px; font-size: 14px;">
-                    🗑️ Clear All
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // Supabase configuration
-        const SUPABASE_URL = 'https://lreqywttsxetueyejgla.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXF5d3R0c3hldHVleWVqZ2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjczODksImV4cCI6MjA3NjMwMzM4OX0.4AZFB2gQ39rsh7JBojZQQMtL3df7_uY_4m1FrVfQQgQ';
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Data storage
-        let clients = [];
-        let payments = [];
-
-        const paymentTypes = ['Zelle', 'ACH', 'Cash', 'Check'];
-        const statuses = ['Paid', 'Pending'];
-
-        // Pagination state
-        let paymentsPage = 1;
-        let paymentsPerPage = 50;
-        let paymentsSearchTerm = '';
-
-        let clientsPage = 1;
-        let clientsPerPage = 50;
-        let clientsSearchTerm = '';
-
-        // Sync status
-        function setSyncStatus(status) {
-            const statusEl = document.getElementById('sync-status');
-            statusEl.className = 'sync-status ' + status;
-            if (status === 'synced') {
-                statusEl.innerHTML = '☁️ Synced';
-            } else if (status === 'syncing') {
-                statusEl.innerHTML = '🔄 Syncing...';
-            } else if (status === 'error') {
-                statusEl.innerHTML = '⚠️ Sync Error';
-            }
-        }
-
-        // Load data from Supabase
-        async function loadClients() {
-            try {
-                const { data, error } = await supabase
-                    .from('clients')
-                    .select('*')
-                    .order('id');
-                
-                if (error) throw error;
-                
-                clients = data.map(c => ({
-                    id: c.id,
-                    name: c.name || '',
-                    policy: c.policy || '',
-                    expDate: c.exp_date || '',
-                    phone: c.phone || '',
-                    email: c.email || '',
-                    notes: c.notes || ''
-                }));
-                
-                document.getElementById('clients-loading').style.display = 'none';
-                document.getElementById('clients-content').style.display = 'block';
-                renderClients();
-            } catch (error) {
-                console.error('Error loading clients:', error);
-                alert('Error loading clients from database');
-                setSyncStatus('error');
-            }
-        }
-
-        async function loadPayments() {
-            try {
-                const { data, error } = await supabase
-                    .from('payments')
-                    .select('*')
-                    .order('id');
-                
-                if (error) throw error;
-                
-                payments = data.map(p => ({
-                    id: p.id,
-                    dateReceived: p.date_received || '',
-                    clientName: p.client_name || '',
-                    amount: p.amount || 0,
-                    paymentType: p.payment_type || 'Zelle',
-                    reference: p.reference || '',
-                    status: p.status || 'Paid'
-                }));
-                
-                document.getElementById('payments-loading').style.display = 'none';
-                document.getElementById('payments-content').style.display = 'block';
-                renderPayments();
-                setSyncStatus('synced');
-            } catch (error) {
-                console.error('Error loading payments:', error);
-                alert('Error loading payments from database');
-                setSyncStatus('error');
-            }
-        }
-
-        // Helper functions
-        function getClientPolicy(clientName) {
-            const client = clients.find(c => c.name.trim() === clientName.trim());
-            return client ? client.policy : '';
-        }
-
-        function formatMonth(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US');
-        }
-
-        function getUniqueMonths() {
+function getUniqueMonths() {
             const months = payments
                 .filter(p => p.dateReceived)
                 .map(p => formatMonth(p.dateReceived))
@@ -1302,7 +559,7 @@
             if (confirm('Are you sure you want to delete this payment?')) {
                 try {
                     setSyncStatus('syncing');
-                    const { error } = await supabase
+                    const { error} = await supabase
                         .from('payments')
                         .delete()
                         .eq('id', id);
@@ -1392,11 +649,9 @@
                             if (confirm('⚠️ This will replace all current data in the cloud database. Are you sure?')) {
                                 setSyncStatus('syncing');
                                 
-                                // Delete all existing data
                                 await supabase.from('clients').delete().neq('id', 0);
                                 await supabase.from('payments').delete().neq('id', 0);
                                 
-                                // Insert backup data
                                 for (const client of backup.clients) {
                                     await supabase.from('clients').insert({
                                         name: client.name,
@@ -1486,9 +741,987 @@
             window.URL.revokeObjectURL(url);
         }
 
-        // Initialize - Load data from Supabase
-        loadClients();
-        loadPayments();
+        // Initialize - Check authentication on page load
+        checkAuth();
     </script>
 </body>
-</html>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Payment Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f3f4f6;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-box h1 {
+            font-size: 28px;
+            color: #111827;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .login-box p {
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .login-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #4b5563;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #dcfce7;
+            color: #166534;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .app-container {
+            display: none;
+        }
+
+        .app-container.authenticated {
+            display: block;
+        }
+
+        .user-info {
+            color: #6b7280;
+            font-size: 13px;
+            padding: 12px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #111827;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .content-header h2 {
+            font-size: 20px;
+            color: #111827;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        thead {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-card.blue {
+            background: #eff6ff;
+        }
+
+        .kpi-card.green {
+            background: #f0fdf4;
+        }
+
+        .kpi-card.purple {
+            background: #faf5ff;
+        }
+
+        .kpi-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .kpi-card.blue .kpi-value {
+            color: #1e40af;
+        }
+
+        .kpi-card.green .kpi-value {
+            color: #15803d;
+        }
+
+        .kpi-card.purple .kpi-value {
+            color: #7c3aed;
+        }
+
+        .kpi-icon {
+            font-size: 48px;
+            opacity: 0.6;
+        }
+
+        .payment-type-card {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .payment-type-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .payment-type-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .payment-type-percent {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .filter-section {
+            margin-bottom: 24px;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .filter-select {
+            max-width: 400px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-paid {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .pagination-info {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-btn {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .search-filter-section {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+        }
+
+        .clear-filters-btn {
+            padding: 8px 16px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .clear-filters-btn:hover {
+            background: #4b5563;
+        }
+
+        .summary-section {
+            margin-bottom: 32px;
+        }
+
+        .summary-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .sync-status.synced {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .sync-status.syncing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .sync-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+
+            .tab {
+                white-space: nowrap;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            .login-box {
+                padding: 24px;
+            }
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <h1>🔒 Insurance Tracker</h1>
+            <p>Secure login with Supabase Authentication</p>
+            <div id="auth-message"></div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="your-email@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+                <button type="submit" class="login-btn" id="login-btn">🔓 Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Container (hidden until authenticated) -->
+    <div id="app-container" class="app-container">
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('payments')">Payments</button>
+            <button class="tab" onclick="switchTab('clients')">Clients</button>
+            <button class="tab" onclick="switchTab('summary')">Summary</button>
+            <button class="tab" onclick="switchTab('clientFilter')">Client Filter</button>
+            <button class="tab" onclick="switchTab('monthFilter')">Month Filter</button>
+            <div style="margin-left: auto; padding: 12px; display: flex; align-items: center; gap: 12px;">
+                <span id="user-email" class="user-info"></span>
+                <span id="sync-status" class="sync-status synced">☁️ Synced</span>
+                <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- Payments Tab -->
+        <div id="payments-tab" class="tab-content active">
+            <div class="content">
+                <div class="content-header">
+                    <h2>Payment Records</h2>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="addPayment()">➕ Add Payment</button>
+                        <button class="btn btn-success" onclick="exportPayments()">📥 Export</button>
+                    </div>
+                </div>
+                
+                <div class="search-filter-section">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="payments-search" 
+                            placeholder="🔍 Search by client, policy, or reference..." 
+                            oninput="paymentsSearchTerm = this.value; filterPayments()"
+                        >
+                    </div>
+                    <button class="clear-filters-btn" onclick="clearPaymentsFilters()">
+                        ✖️ Clear Search
+                    </button>
+                </div>
+
+                <div id="payments-loading" class="loading">Loading payments...</div>
+                <div id="payments-content" style="display: none;">
+                    <div style="overflow-x: auto;">
+                        <table id="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Month</th>
+                                    <th>Client Name</th>
+                                    <th>Policy #</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Reference</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="payments-pagination" class="pagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clients Tab -->
+        <div id="clients-tab" class="tab-content">
+            <div class="content">
+                <div class="content-header">
+                    <h2>Client Database</h2>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="addClient()">➕ Add Client</button>
+                        <button class="btn btn-success" onclick="exportClients()">📥 Export</button>
+                    </div>
+                </div>
+                
+                <div class="search-filter-section">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="clients-search" 
+                            placeholder="🔍 Search by name, policy, email, or phone..." 
+                            oninput="clientsSearchTerm = this.value; filterClients()"
+                        >
+                    </div>
+                    <button class="clear-filters-btn" onclick="clearClientsFilters()">
+                        ✖️ Clear Search
+                    </button>
+                </div>
+
+                <div id="clients-loading" class="loading">Loading clients...</div>
+                <div id="clients-content" style="display: none;">
+                    <div style="overflow-x: auto;">
+                        <table id="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>Client Name</th>
+                                    <th>Policy #</th>
+                                    <th>Exp Date</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="clients-pagination" class="pagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Tab -->
+        <div id="summary-tab" class="tab-content">
+            <div class="content">
+                <h2 style="margin-bottom: 20px;">Summary Dashboard</h2>
+                <div class="kpi-grid" id="kpi-grid"></div>
+                
+                <div class="summary-section">
+                    <h3>Payment Type Breakdown</h3>
+                    <div id="payment-types"></div>
+                </div>
+
+                <div class="summary-section">
+                    <h3>Monthly Summary</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th style="text-align: right;">Total Amount</th>
+                                <th style="text-align: right;"># Payments</th>
+                                <th style="text-align: right;">Avg Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthly-summary"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Filter Tab -->
+        <div id="clientFilter-tab" class="tab-content">
+            <div class="content">
+                <h2 style="margin-bottom: 20px;">Client Payment History</h2>
+                <div class="filter-section">
+                    <label class="filter-label">Choose Client:</label>
+                    <select id="client-filter" class="filter-select" onchange="filterByClient()">
+                        <option value="">Select a client...</option>
+                    </select>
+                </div>
+                <div id="client-filter-results"></div>
+            </div>
+        </div>
+
+        <!-- Month Filter Tab -->
+        <div id="monthFilter-tab" class="tab-content">
+            <div class="content">
+                <h2 style="margin-bottom: 20px;">Monthly Payments View</h2>
+                <div class="filter-section">
+                    <label class="filter-label">Choose Month:</label>
+                    <select id="month-filter" class="filter-select" onchange="filterByMonth()">
+                        <option value="">Select a month...</option>
+                    </select>
+                </div>
+                <div id="month-filter-results"></div>
+            </div>
+        </div>
+
+        <!-- Footer with data management buttons -->
+        <div class="content" style="margin-top: 24px;">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 12px; padding: 12px;">
+                <button class="btn btn-success" onclick="backupData()" title="Download a backup of all your data">
+                    📦 Backup Data
+                </button>
+                <button class="btn btn-primary" onclick="restoreData()" title="Restore data from a backup file">
+                    📥 Restore Data
+                </button>
+                <button class="btn btn-danger" onclick="clearAllData()" title="Delete all data and start fresh" style="padding: 10px 16px; font-size: 14px;">
+                    🗑️ Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://lreqywttsxetueyejgla.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXF5d3R0c3hldHVleWVqZ2xhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MjczODksImV4cCI6MjA3NjMwMzM4OX0.4AZFB2gQ39rsh7JBojZQQMtL3df7_uY_4m1FrVfQQgQ';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Data storage
+        let clients = [];
+        let payments = [];
+        let currentUser = null;
+
+        const paymentTypes = ['Zelle', 'ACH', 'Cash', 'Check'];
+        const statuses = ['Paid', 'Pending'];
+
+        // Pagination state
+        let paymentsPage = 1;
+        let paymentsPerPage = 50;
+        let paymentsSearchTerm = '';
+
+        let clientsPage = 1;
+        let clientsPerPage = 50;
+        let clientsSearchTerm = '';
+
+        // Authentication
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                showApp();
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('login-btn');
+            const messageDiv = document.getElementById('auth-message');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = '🔄 Logging in...';
+            messageDiv.innerHTML = '';
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                showApp();
+            } catch (error) {
+                console.error('Login error:', error);
+                messageDiv.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🔓 Login';
+            }
+        }
+
+        async function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                await supabase.auth.signOut();
+                currentUser = null;
+                hideApp();
+            }
+        }
+
+        function showApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-container').classList.add('authenticated');
+            document.getElementById('user-email').textContent = currentUser.email;
+            loadClients();
+            loadPayments();
+        }
+
+        function hideApp() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('app-container').classList.remove('authenticated');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('auth-message').innerHTML = '';
+        }
+
+        // Sync status
+        function setSyncStatus(status) {
+            const statusEl = document.getElementById('sync-status');
+            statusEl.className = 'sync-status ' + status;
+            if (status === 'synced') {
+                statusEl.innerHTML = '☁️ Synced';
+            } else if (status === 'syncing') {
+                statusEl.innerHTML = '🔄 Syncing...';
+            } else if (status === 'error') {
+                statusEl.innerHTML = '⚠️ Sync Error';
+            }
+        }
+
+        // Load data from Supabase
+        async function loadClients() {
+            try {
+                const { data, error } = await supabase
+                    .from('clients')
+                    .select('*')
+                    .order('id');
+                
+                if (error) throw error;
+                
+                clients = data.map(c => ({
+                    id: c.id,
+                    name: c.name || '',
+                    policy: c.policy || '',
+                    expDate: c.exp_date || '',
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    notes: c.notes || ''
+                }));
+                
+                document.getElementById('clients-loading').style.display = 'none';
+                document.getElementById('clients-content').style.display = 'block';
+                renderClients();
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                alert('Error loading clients from database');
+                setSyncStatus('error');
+            }
+        }
+
+        async function loadPayments() {
+            try {
+                const { data, error } = await supabase
+                    .from('payments')
+                    .select('*')
+                    .order('id');
+                
+                if (error) throw error;
+                
+                payments = data.map(p => ({
+                    id: p.id,
+                    dateReceived: p.date_received || '',
+                    clientName: p.client_name || '',
+                    amount: p.amount || 0,
+                    paymentType: p.payment_type || 'Zelle',
+                    reference: p.reference || '',
+                    status: p.status || 'Paid'
+                }));
+                
+                document.getElementById('payments-loading').style.display = 'none';
+                document.getElementById('payments-content').style.display = 'block';
+                renderPayments();
+                setSyncStatus('synced');
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                alert('Error loading payments from database');
+                setSyncStatus('error');
+            }
+        }
+
+        // Helper functions
+        function getClientPolicy(clientName) {
+            const client = clients.find(c => c.name.trim() === clientName.trim());
+            return client ? client.policy : '';
+        }
+
+        function formatMonth(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US');
+        }
+
+        function getUniqueMonths() {
+            const months = payments
+                .filter(p => p.dateReceived)
+                .map(p =>
